@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using clawSoft.clawPDF.Core.Jobs;
+using clawSoft.clawPDF.PDFProcessing;
 using clawSoft.clawPDF.Shared.Helper;
 using clawSoft.clawPDF.Utilities;
 using clawSoft.clawPDF.Utilities.Process;
@@ -12,6 +14,7 @@ namespace clawSoft.clawPDF.PrintFile
     {
         Print,
         PrintTo,
+        ExportWordPdf,
         Unprintable
     }
 
@@ -48,6 +51,12 @@ namespace clawSoft.clawPDF.PrintFile
                 return;
             }
 
+            if (WordPdfExporter.IsWordDocument(filename))
+            {
+                CommandType = WordPdfExporter.IsAvailable ? PrintType.ExportWordPdf : PrintType.Unprintable;
+                return;
+            }
+
             if (!SupportsPrint() && !SupportsPrintTo())
                 CommandType = PrintType.Unprintable;
             else
@@ -64,7 +73,7 @@ namespace clawSoft.clawPDF.PrintFile
 
         public bool IsPrintable => CommandType != PrintType.Unprintable;
 
-        public bool RequiresDefaultPrinter => CommandType != PrintType.PrintTo;
+        public bool RequiresDefaultPrinter => CommandType == PrintType.Print;
 
         public string Printer { get; }
 
@@ -86,6 +95,21 @@ namespace clawSoft.clawPDF.PrintFile
         {
             if (CommandType == PrintType.Unprintable)
                 throw new InvalidOperationException("File is not printable");
+
+            if (CommandType == PrintType.ExportWordPdf)
+            {
+                try
+                {
+                    ExportWordPdf();
+                    Successful = true;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Native Word PDF export failed.");
+                    return false;
+                }
+                return Successful;
+            }
 
             var printerHelper = new PrinterHelper();
             if (CommandType == PrintType.Print && Printer != printerHelper.GetDefaultPrinter())
@@ -129,6 +153,52 @@ namespace clawSoft.clawPDF.PrintFile
             }
 
             return Successful;
+        }
+
+        private void ExportWordPdf()
+        {
+            var tempFolder = Path.Combine(Path.GetTempPath(), "clawPDF-Word-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempFolder);
+            var pdfFile = Path.Combine(tempFolder, Path.GetFileNameWithoutExtension(Filename) + ".pdf");
+            string infFile = null;
+            var submitted = false;
+            try
+            {
+                WordPdfExporter.Export(Filename, pdfFile);
+                infFile = PsFileHelper.TransformToInfFile(pdfFile, JobInfoQueue.Instance.SpoolFolder, Printer);
+                if (string.IsNullOrEmpty(infFile))
+                    throw new IOException("Could not queue the PDF exported by Word.");
+
+                var jobInfo = new JobInfo(infFile);
+                jobInfo.SourceFiles[0].DocumentTitle = Filename;
+                jobInfo.SourceFiles[0].TotalPages = PDFProcessor.GetNumberOfPages(pdfFile);
+                jobInfo.SaveInf();
+
+                var executable = typeof(PrintCommand).Assembly.Location;
+                var process = ProcessWrapperFactory.BuildProcessWrapper(new ProcessStartInfo(executable)
+                {
+                    Arguments = "/InfoDataFile=\"" + infFile + "\"",
+                    WorkingDirectory = Path.GetDirectoryName(executable),
+                    UseShellExecute = false
+                });
+                // The PDF is already copied to the spool; its normal job lifecycle owns that copy.
+                process.Start();
+                submitted = true;
+            }
+            finally
+            {
+                if (!submitted && !string.IsNullOrEmpty(infFile))
+                    new JobInfo(infFile).Delete(true);
+                try
+                {
+                    File.Delete(pdfFile);
+                    Directory.Delete(tempFolder);
+                }
+                catch (IOException ex)
+                {
+                    Logger.Warn(ex, "Could not remove temporary Word export files.");
+                }
+            }
         }
 
         private bool SupportsPrint()

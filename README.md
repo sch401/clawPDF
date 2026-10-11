@@ -8,6 +8,50 @@ ClawPDF is open-source and compatible with all major Windows client and server o
 
 # Download
 
+## This fork: native Word PDF export (0.9.3.1)
+
+When a `.docx`, `.docm`, or `.doc` file is dropped into clawPDF or submitted through
+`/PrintFile` or the COM `PrintFile` API, this fork uses the installed Microsoft Word
+PDF exporter before submitting the PDF to the existing clawPDF conversion queue.
+SVG graphics that Word preserves in its PDF export stay vector in the normal PDF
+profile. Heading styles produce the PDF's chapter bookmarks. TOC, REF, PAGEREF and
+NOTEREF fields in the document body are exported as clickable links, including
+references originally inserted without the hyperlink option. Locked fields retain
+their existing behavior. The changes apply to the export instance only.
+
+Choose PDF for vector output; the PDF/Image and OCR profiles intentionally
+render pages as images. Word export runs synchronously and requires desktop Word.
+
+The source document is opened read-only in a separate, hidden Word instance with
+macros disabled. Export errors are reported through the existing error handling;
+they do not fall back to printing a rasterized version. Save edits in Word before
+submitting the document file.
+
+Printing from Word's **File > Print > clawPDF** continues to use the PostScript
+printer driver. Use file import or `/PrintFile` to use native Word export.
+
+```powershell
+clawPDF.exe /PrintFile="C:\Documents\figure.docx"
+```
+
+Run `powershell -File .\build.ps1` with Visual Studio's .NET desktop development
+tools installed. This builds the unsigned application, bridge and setup helper;
+compiler reference assemblies are downloaded locally when the .NET Framework 4.6.2
+targeting pack is missing. Output is in `src\_Build\Release`. The native printer
+driver is unchanged; an existing clawPDF 0.9.3 installation supplies that driver.
+
+The packaged application is a ZIP build for an existing clawPDF 0.9.3 installation.
+Close any running clawPDF instance, extract the entire ZIP, and run its `clawPDF.exe`.
+Drop a saved Word document onto that executable and choose the normal PDF profile.
+It uses the existing installed printer and settings. The ZIP does not install or
+replace the printer driver, register a new COM server, or change Windows file
+associations. Its assemblies are unsigned.
+
+`tests\create_word_fixture.py`, `tests\WordPdfRegression.cs` and
+`tests\check_word_pdf.py` exercise a three-page document containing SVG, heading
+bookmarks, a TOC, REF/PAGEREF fields and an external hyperlink through Word export
+and the clawPDF conversion pipeline. See [test instructions](tests/README.md).
+
 https://github.com/clawsoftware/clawPDF/releases/download/0.9.3/clawPDF_0.9.3_setup.msi
 
 

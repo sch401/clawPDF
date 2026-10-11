@@ -120,6 +120,7 @@
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="DataStorage">
       <HintPath>..\lib\DataStorage.dll</HintPath>
     </Reference>
@@ -175,6 +176,7 @@
     <Compile Include="IJobInfoQueue.cs" />
     <Compile Include="NewJobInfoEventArgs.cs" />
     <Compile Include="PrintFile\PrintCommand.cs" />
+    <Compile Include="PrintFile\WordPdfExporter.cs" />
     <Compile Include="PrintFile\PrintCommandGroup.cs" />
     <Compile Include="JobRunner.cs" />
     <Compile Include="Properties\Annotations.cs" />
