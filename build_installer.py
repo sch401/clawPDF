@@ -143,7 +143,7 @@ def run_tool(args, folder):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Build the Word SVG MSI from the upstream installer and Release binaries.')
+    parser = argparse.ArgumentParser(description='Build the clawPDF MSI from the upstream installer and Release binaries.')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--build-dir', type=Path, help='Release directory; defaults to src/_Build/Release.')
     args = parser.parse_args()
@@ -151,8 +151,8 @@ def main():
     build = args.build_dir.resolve() if args.build_dir else repo / 'src/_Build/Release'
     metadata = assembly_metadata(build)
     version = '.'.join(metadata['clawpdf.exe']['Version'].split('.')[:3])
-    if version != '0.9.6':
-        raise RuntimeError('Build the 0.9.6 Release binaries first.')
+    if version != '0.9.7':
+        raise RuntimeError('Build the 0.9.7 Release binaries first.')
     if (build / 'clawPDF.tlb').read_bytes()[:4] != b'MSFT':
         raise RuntimeError('Export clawPDF.tlb with TlbExp.exe before building the installer.')
     work = repo / '.build-tools' / ('installer-' + uuid.uuid4().hex)
@@ -245,7 +245,7 @@ def main():
                     else:
                         execute(database, 'DELETE FROM `MsiAssemblyName` WHERE `Component_`=? AND `Name`=?', row['Component_'], entry['Name'])
 
-        for name, value in {'ProductVersion': version, 'ProductName': 'clawPDF ' + version + ' Word SVG 中文版',
+        for name, value in {'ProductVersion': version, 'ProductName': 'clawPDF',
                             'ProductLanguage': '2052',
                             'ProductCode': '{' + str(uuid.uuid5(uuid.NAMESPACE_URL, 'https://github.com/sch401/clawPDF/' + version)).upper() + '}',
                             'ARPURLINFOABOUT': 'https://github.com/sch401/clawPDF/tree/preserve-word-svg'}.items():

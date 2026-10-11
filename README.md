@@ -8,7 +8,12 @@ ClawPDF is open-source and compatible with all major Windows client and server o
 
 # Download
 
-## This fork: native Word PDF export and print integration (0.9.6)
+## This fork: native Word PDF export and print integration (0.9.7)
+
+The application and installed product are named **clawPDF**. Version 0.9.7 shares
+one COM registration routine across 32-bit and 64-bit registry views, reports
+registration failures, and checks the selected printer before reading driver
+details. Print job titles use the document name instead of its full disk path.
 
 Close Word before installing the MSI, reopen it, and use **File > Print >
 clawPDF** with the normal **PDF** profile. The installed Word COM add-in cancels
@@ -58,13 +63,13 @@ It uses the existing installed printer and settings. The ZIP does not install or
 replace the printer driver, register a new COM server, or change Windows file
 associations. Its assemblies are unsigned.
 
-The 0.9.6 MSI includes the upstream printer driver, shortcuts, Word add-in, COM registration
+The 0.9.7 MSI includes the upstream printer driver, shortcuts, Word add-in, COM registration
 and uninstall actions. It uses the same upgrade family and a new product code.
 Old products are removed within the installation transaction before new files are
 installed, so libraries rebuilt without the upstream signing key are replaced too.
 The MSI is unsigned. Close clawPDF and all Word windows before running the installer.
 
-In Word's COM Add-ins list, **clawPDF Word 矢量打印** must be loaded for the print
+In Word's COM Add-ins list, **clawPDF 打印组件** must be loaded for the print
 integration. If its registration is missing, repair the MSI or run
 `SetupHelper.exe /ComInterface=Register` from the installed clawPDF directory as
 administrator, then restart Word. Closing a document window can leave an older
@@ -77,7 +82,7 @@ To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
 `src\_Build\Release\clawPDF.tlb`, then run:
 
 ```powershell
-python build_installer.py --output clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
+python build_installer.py --output clawPDF-0.9.7-setup.msi
 ```
 
 If Word has loaded a DLL from the default build directory, compile into a separate

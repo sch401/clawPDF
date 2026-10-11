@@ -148,107 +148,48 @@ namespace clawSoft.clawPDF.SetupHelper
 
         private static void AddExplorerIntegration()
         {
-            if (Environment.Is64BitOperatingSystem)
-            {
-                CallRegAsmForShellWow6432("clawPDFShell.dll", "/codebase");
-            }
             CallRegAsmForShell("clawPDFShell.dll", "/codebase");
         }
 
         private static void RemoveExplorerIntegration()
         {
-            if (Environment.Is64BitOperatingSystem)
-            {
-                CallRegAsmForShellWow6432("clawPDFShell.dll", "/unregister");
-            }
             CallRegAsmForShell("clawPDFShell.dll", "/unregister");
         }
 
         private static void RegisterComInterface()
         {
-            if (Environment.Is64BitOperatingSystem)
-            {
-                CallRegAsmForShellWow6432("clawPDF.exe", "/codebase /tlb");
-                CallRegAsmForShellWow6432("clawPDF.WordAddIn.dll", "/codebase");
-            }
             CallRegAsmForShell("clawPDF.exe", "/codebase /tlb");
             CallRegAsmForShell("clawPDF.WordAddIn.dll", "/codebase");
         }
 
         private static void UnregisterComInterface()
         {
-            if (Environment.Is64BitOperatingSystem)
-            {
-                CallRegAsmForShellWow6432("clawPDF.exe", "/unregister");
-                CallRegAsmForShellWow6432("clawPDF.WordAddIn.dll", "/unregister");
-            }
             CallRegAsmForShell("clawPDF.exe", "/unregister");
             CallRegAsmForShell("clawPDF.WordAddIn.dll", "/unregister");
         }
 
-        private static void CallRegAsmForShellWow6432(string fileName, string parameters)
-        {
-            var regAsmPathWow6432 = GetRegAsmPathWow6432();
-
-            var appDir = GetApplicationDirectory();
-            var shellDll = Path.Combine(appDir, fileName);
-
-            var shellExecuteHelper = new ShellExecuteHelper();
-
-            var paramString = $"\"{shellDll}\" {parameters}";
-            Console.WriteLine(regAsmPathWow6432 + " " + paramString);
-
-            var result = shellExecuteHelper.RunAsAdmin(regAsmPathWow6432, paramString);
-            Console.WriteLine(result.ToString());
-        }
-
         private static void CallRegAsmForShell(string fileName, string parameters)
         {
-            var regAsmPath = GetRegAsmPath();
-
-            var appDir = GetApplicationDirectory();
-            var shellDll = Path.Combine(appDir, fileName);
-
+            var shellDll = Path.Combine(new AssemblyHelper().GetCurrentAssemblyDirectory(), fileName);
             var shellExecuteHelper = new ShellExecuteHelper();
-
             var paramString = $"\"{shellDll}\" {parameters}";
-            Console.WriteLine(regAsmPath + " " + paramString);
-
-            var result = shellExecuteHelper.RunAsAdmin(regAsmPath, paramString);
-            Console.WriteLine(result.ToString());
-        }
-
-        private static string GetRegAsmPathWow6432()
-        {
-            var regPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\.NETFramework";
-
-            Console.WriteLine(regPath);
-
-            var dotNetPath = Registry.GetValue(regPath, "InstallRoot", null)?.ToString();
-
-            if (string.IsNullOrEmpty(dotNetPath))
-                throw new InvalidOperationException("Cannot find .Net Framework in HKLM\\" + regPath);
-
-            return Path.Combine(dotNetPath, "v4.0.30319\\RegAsm.exe");
-        }
-
-        private static string GetRegAsmPath()
-        {
-            var regPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\.NETFramework";
-
-            Console.WriteLine(regPath);
-
-            var dotNetPath = Registry.GetValue(regPath, "InstallRoot", null)?.ToString();
-
-            if (string.IsNullOrEmpty(dotNetPath))
-                throw new InvalidOperationException("Cannot find .Net Framework in HKLM\\" + regPath);
-
-            return Path.Combine(dotNetPath, "v4.0.30319\\RegAsm.exe");
-        }
-
-        private static string GetApplicationDirectory()
-        {
-            return new AssemblyHelper().GetCurrentAssemblyDirectory();
+            var views = Environment.Is64BitOperatingSystem
+                ? new[] { RegistryView.Registry64, RegistryView.Registry32 }
+                : new[] { RegistryView.Registry32 };
+            foreach (var view in views)
+            {
+                string dotNetPath;
+                using (var root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, view))
+                using (var framework = root.OpenSubKey(@"SOFTWARE\Microsoft\.NETFramework"))
+                    dotNetPath = framework?.GetValue("InstallRoot") as string;
+                if (string.IsNullOrEmpty(dotNetPath))
+                    throw new InvalidOperationException("Cannot find .NET Framework for " + view);
+                var regAsmPath = Path.Combine(dotNetPath, @"v4.0.30319\RegAsm.exe");
+                Console.WriteLine(regAsmPath + " " + paramString);
+                var result = shellExecuteHelper.RunAsAdmin(regAsmPath, paramString);
+                if (result != ShellExecuteResult.Success)
+                    throw new InvalidOperationException("COM registration command failed: " + fileName + " (" + view + ", " + result + ")");
+            }
         }
     }
 }

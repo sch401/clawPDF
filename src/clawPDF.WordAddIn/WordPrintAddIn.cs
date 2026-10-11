@@ -7,8 +7,8 @@ using System.Text;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyVersion("0.9.6.0")]
-[assembly: AssemblyFileVersion("0.9.6.0")]
+[assembly: AssemblyVersion("0.9.7.0")]
+[assembly: AssemblyFileVersion("0.9.7.0")]
 [assembly: ComVisible(false)]
 
 namespace clawSoft.clawPDF.WordAddIn
@@ -69,7 +69,7 @@ namespace clawSoft.clawPDF.WordAddIn
                 string snapshot = Path.Combine(folder, "document.xml");
                 // Flat OPC keeps SVG and unsaved edits; field updates happen only in the detached copy.
                 File.WriteAllText(snapshot, (string)doc.WordOpenXML, new UTF8Encoding(false));
-                string title = (string)doc.FullName;
+                string title = (string)doc.Name;
                 string executable = Path.Combine(Path.GetDirectoryName(typeof(WordPrintAddIn).Assembly.Location), "clawPDF.exe");
                 Process.Start(new ProcessStartInfo(executable)
                 {
@@ -92,15 +92,18 @@ namespace clawSoft.clawPDF.WordAddIn
 
         private static string FindPrinter(string activePrinter)
         {
+            if (string.IsNullOrWhiteSpace(activePrinter)) return null;
             using (var printers = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Print\Printers"))
             {
                 if (printers == null) return null;
                 foreach (string name in printers.GetSubKeyNames())
+                {
+                    if (!string.Equals(activePrinter, name, StringComparison.OrdinalIgnoreCase)
+                        && !activePrinter.StartsWith(name + " ", StringComparison.OrdinalIgnoreCase)) continue;
                     using (var printer = printers.OpenSubKey(name))
-                        if (string.Equals(printer.GetValue("Printer Driver") as string, "clawPDF Virtual Printer", StringComparison.OrdinalIgnoreCase)
-                            && (string.Equals(activePrinter, name, StringComparison.OrdinalIgnoreCase)
-                                || activePrinter.StartsWith(name + " ", StringComparison.OrdinalIgnoreCase)))
+                        if (string.Equals(printer?.GetValue("Printer Driver") as string, "clawPDF Virtual Printer", StringComparison.OrdinalIgnoreCase))
                             return name;
+                }
             }
             return null;
         }
@@ -110,7 +113,7 @@ namespace clawSoft.clawPDF.WordAddIn
         {
             using (var key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Office\Word\Addins\clawPDF.WordPrint"))
             {
-                key.SetValue("FriendlyName", "clawPDF Word 矢量打印");
+                key.SetValue("FriendlyName", "clawPDF 打印组件");
                 key.SetValue("Description", "保留 SVG、章节书签和目录／交叉引用跳转");
                 key.SetValue("LoadBehavior", 3, RegistryValueKind.DWord);
                 key.SetValue("CommandLineSafe", 0, RegistryValueKind.DWord);

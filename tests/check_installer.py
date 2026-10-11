@@ -27,6 +27,7 @@ try:
     old_props = {r['Property']: r['Value'] for r in api.query(original, 'SELECT * FROM `Property`')}
     expected_version = '.'.join(api.assembly_metadata(build)['clawpdf.exe']['Version'].split('.')[:3])
     assert props['ProductVersion'] == expected_version
+    assert props['ProductName'] == 'clawPDF'
     assert props['ProductLanguage'] == '2052'
     controls = api.query(new, 'SELECT * FROM `Control`')
     welcome = next(row['Text'] for row in controls if row['Dialog_'] == 'WelcomeForm' and row['Control'] == 'BannerText')

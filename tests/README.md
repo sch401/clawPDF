@@ -1,5 +1,13 @@
 # Word SVG and navigation regression
 
+Version 0.9.7 passed the three-page snapshot regression with zero bitmap images
+and the expected bookmark and link destinations. `PrinterRoutingRegression.cs`
+also checks the installed clawPDF printer with English and Chinese port suffixes,
+empty input, a similar but different printer name, and Microsoft Print to PDF.
+Compile it to an executable with Roslyn and pass `clawPDF.WordAddIn.dll` as its
+argument. This separate check requires the installed clawPDF printer; the document
+fixture test uses its isolated conversion queue.
+
 Requires desktop Microsoft Word, Python with Pillow, pypdf and pdfplumber, and a
 Release build of clawPDF. Run from the repository root. Pass the path to Visual
 Studio's Roslyn `csc.exe` as `$compiler`.
@@ -59,7 +67,7 @@ that process has ended. This cleanup helper is outside the product and MSI.
 After building the MSI, run the offline installer check from the repository root:
 
 ```powershell
-python tests/check_installer.py . path/to/clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
+python tests/check_installer.py . path/to/clawPDF-0.9.7-setup.msi
 ```
 
 For an alternate Release directory, append its path as the third argument to
