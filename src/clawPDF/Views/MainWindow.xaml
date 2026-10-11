@@ -45,7 +45,7 @@
                 Save your Word document, select it here, then choose PDF to preserve SVG graphics and links.
             </TextBlock>
             <TextBlock Name="WordPrintHintText" TextWrapping="Wrap" Margin="0 6 0 0">
-                Word's Print command can rasterize SVG. Use the button above for vector output.
+                Restart Word after installation. File > Print > clawPDF preserves SVG with the PDF profile (whole document, one page per sheet).
             </TextBlock>
         </StackPanel>
         <StackPanel Grid.Row="2" VerticalAlignment="Center" Margin="30 12">

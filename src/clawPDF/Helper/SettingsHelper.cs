@@ -71,6 +71,16 @@ namespace clawSoft.clawPDF.Helper
 
             CheckTitleReplacement();
 
+            // Switch an existing English installation to this edition's Chinese default once.
+            var languageMigration = _settings.ApplicationProperties.ApplicationVersion < 96;
+            if (languageMigration)
+            {
+                if (string.IsNullOrEmpty(_settings.ApplicationSettings.Language)
+                    || string.Equals(_settings.ApplicationSettings.Language, "English", StringComparison.OrdinalIgnoreCase))
+                    _settings.ApplicationSettings.Language = "Chinese (Simplified)";
+                _settings.ApplicationProperties.ApplicationVersion = 96;
+            }
+
             if (_settings.ApplicationSettings.Language == "")
             {
                 var language = TranslationHelper.Instance.LanguageLoader.FindBestLanguage(CultureInfo.CurrentCulture);
@@ -84,6 +94,7 @@ namespace clawSoft.clawPDF.Helper
             TranslationHelper.Instance.InitTranslator(applicationLanguage);
             LoggingHelper.ChangeLogLevel(_settings.ApplicationSettings.LoggingLevel);
             TranslationHelper.Instance.TranslateProfileList(Settings.ConversionProfiles);
+            if (languageMigration) SaveSettings();
 
             if (_logger.IsTraceEnabled)
             {

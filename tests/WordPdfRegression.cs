@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
+using System.Text;
 using clawSoft.clawPDF.Core.Jobs;
 using clawSoft.clawPDF.Core.Settings;
 using clawSoft.clawPDF.Core.Settings.Enums;
@@ -46,16 +48,43 @@ internal static class WordPdfRegression
             var hash = Hash(source);
             var assembly = Assembly.LoadFrom(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "clawPDF.exe"));
             var exporter = assembly.GetType("clawSoft.clawPDF.PrintFile.WordPdfExporter", true);
+            var snapshotMode = args.Length > 2 && args[2] == "--snapshot";
+            var input = source;
+            if (snapshotMode)
+            {
+                input = Path.Combine(folder, "document.xml");
+                dynamic word = Activator.CreateInstance(Type.GetTypeFromProgID("Word.Application"));
+                dynamic doc = null;
+                try
+                {
+                    word.Visible = false;
+                    word.AutomationSecurity = 3;
+                    doc = word.Documents.Open(source, ReadOnly: true, AddToRecentFiles: false);
+                    File.WriteAllText(input, (string)doc.WordOpenXML, new UTF8Encoding(false));
+                }
+                finally
+                {
+                    if (doc != null)
+                    {
+                        try { doc.Close(SaveChanges: 0); }
+                        catch (COMException) { }
+                        Marshal.ReleaseComObject((object)doc);
+                    }
+                    try { word.Quit(SaveChanges: 0); }
+                    catch (COMException) { /* Word can exit when its last automation document closes. */ }
+                    Marshal.ReleaseComObject((object)word);
+                }
+            }
             Assert((bool)exporter.GetMethod("IsWordDocument").Invoke(null, new object[] { source }), "Uppercase DOCX detection");
             Assert(!(bool)exporter.GetMethod("IsWordDocument").Invoke(null, new object[] { "figure.svg" }), "Non-Word type detection");
-            var export = exporter.GetMethod("Export");
+            var export = exporter.GetMethod(snapshotMode ? "ExportSnapshot" : "Export");
             var wordPdf = Path.Combine(folder, "word-native.pdf");
-            export.Invoke(null, new object[] { source, wordPdf });
+            export.Invoke(null, new object[] { input, wordPdf });
             Assert(hash == Hash(source), "Source document unchanged");
 
             var commandType = assembly.GetType("clawSoft.clawPDF.PrintFile.PrintCommand", true);
-            var command = Activator.CreateInstance(commandType, new object[] { source, "clawPDF" });
-            Assert(commandType.GetProperty("CommandType").GetValue(command).ToString() == "ExportWordPdf", "Shared Word route");
+            var command = Activator.CreateInstance(commandType, new object[] { input, "clawPDF" });
+            if (!snapshotMode) Assert(commandType.GetProperty("CommandType").GetValue(command).ToString() == "ExportWordPdf", "Shared Word route");
             Assert(!(bool)commandType.GetProperty("RequiresDefaultPrinter").GetValue(command), "Word route leaves default printer unchanged");
             try
             {
@@ -75,7 +104,9 @@ internal static class WordPdfRegression
             queueType.GetField("<SpoolFolder>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(queue, testSpool);
             var capture = new CaptureProcessFactory();
             commandType.GetProperty("ProcessWrapperFactory").SetValue(command, capture);
-            Assert((bool)commandType.GetMethod("Print", new[] { typeof(TimeSpan) }).Invoke(command, new object[] { TimeSpan.FromSeconds(60) }), "Word command submission");
+            Assert(snapshotMode
+                ? (bool)commandType.GetMethod("PrintWordSnapshot").Invoke(command, new object[] { source })
+                : (bool)commandType.GetMethod("Print", new[] { typeof(TimeSpan) }).Invoke(command, new object[] { TimeSpan.FromSeconds(60) }), "Word command submission");
             Assert(capture.Submitted != null && capture.Submitted.FileName == assembly.Location, "Queue uses the new executable");
             var inf = capture.Submitted.Arguments.Substring("/InfoDataFile=".Length).Trim('"');
             Assert(Path.GetFullPath(inf).StartsWith(testSpool + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "Test job confined to its spool");

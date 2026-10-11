@@ -55,7 +55,7 @@ try:
         api.run_tool(['expand.exe', '-F:*', str(folder / (name + '.cab')), str(folder / name)], folder)
 
     files = api.query(new, 'SELECT * FROM `File`')
-    assert len(files) == 112
+    assert len(files) == 113
     assert int(api.query(new, 'SELECT * FROM `Media`')[0]['LastSequence']) == max(int(r['Sequence']) for r in files)
     hashes = {r['File_']: r for r in api.query(new, 'SELECT * FROM `MsiFileHash`')}
     identities = api.assembly_metadata(repo / 'src/_Build/Release')
@@ -84,6 +84,7 @@ try:
             if not identity['PublicKeyToken']:
                 assert not any(entry['Name'] == 'PublicKeyToken' for entry in api.query(new, f"SELECT * FROM `MsiAssemblyName` WHERE `Component_` = '{row['Component_']}'"))
     assert drivers == 21 and (layout / 'clawPDF.Bridge.exe.config').is_file()
+    assert (layout / 'clawPDF.WordAddIn.dll').is_file()
     report = dict(validation='PASS', version=props['ProductVersion'], files=len(files),
                   preserved_driver_files=drivers, matched_build_files=replacements,
                   sha256=hashlib.sha256(package.read_bytes()).hexdigest(), layout=str(layout),

@@ -8,14 +8,21 @@ ClawPDF is open-source and compatible with all major Windows client and server o
 
 # Download
 
-## This fork: native Word PDF export (0.9.5)
+## This fork: native Word PDF export and print integration (0.9.6)
 
-Open clawPDF and click **Word to PDF (preserve SVG)**, select a saved Word
-document, and choose the normal **PDF** profile. The main window explains the
-Word printing limitation alongside this button, in English and Chinese.
-New users default to Simplified Chinese. Existing language preferences are
-retained and can be changed in Application Settings. The installer wizard is
-also localized into Simplified Chinese.
+Close Word before installing the MSI, reopen it, and use **File > Print >
+clawPDF** with the normal **PDF** profile. The installed Word COM add-in cancels
+the PostScript print job and submits a detached Flat OPC snapshot, including
+unsaved edits, to the native Word PDF exporter and clawPDF queue. It intercepts
+only printers using the clawPDF Virtual Printer driver. This route currently
+exports the whole document at one page per sheet; page selection, copies and
+multiple pages per sheet are not applied. Other printers retain normal printing.
+
+The separate **Word to PDF (preserve SVG)** button still accepts saved Word files.
+New users default to Simplified Chinese. On the first 0.9.6 startup, an empty or
+English language preference migrates to Simplified Chinese; other languages are
+retained. Later language choices remain editable in Application Settings. The
+installer wizard is also localized into Simplified Chinese.
 
 When a `.docx`, `.docm`, or `.doc` file is dropped into clawPDF or submitted through
 `/PrintFile` or the COM `PrintFile` API, this fork uses the installed Microsoft Word
@@ -34,15 +41,12 @@ macros disabled. Export errors are reported through the existing error handling;
 they do not fall back to printing a rasterized version. Save edits in Word before
 submitting the document file.
 
-Printing from Word's **File > Print > clawPDF** continues to use the PostScript
-printer driver. Use file import or `/PrintFile` to use native Word export.
-
 ```powershell
 clawPDF.exe /PrintFile="C:\Documents\figure.docx"
 ```
 
 Run `powershell -File .\build.ps1` with Visual Studio's .NET desktop development
-tools installed. This builds the unsigned application, bridge and setup helper;
+tools installed. This builds the unsigned application, bridge, setup helper and Word add-in;
 compiler reference assemblies are downloaded locally when the .NET Framework 4.6.2
 targeting pack is missing. Output is in `src\_Build\Release`. The native printer
 driver is unchanged; an existing clawPDF 0.9.3 installation supplies that driver.
@@ -54,18 +58,18 @@ It uses the existing installed printer and settings. The ZIP does not install or
 replace the printer driver, register a new COM server, or change Windows file
 associations. Its assemblies are unsigned.
 
-The 0.9.5 MSI includes the upstream printer driver, shortcuts, COM registration
+The 0.9.6 MSI includes the upstream printer driver, shortcuts, Word add-in, COM registration
 and uninstall actions. It uses the same upgrade family and a new product code.
 Old products are removed within the installation transaction before new files are
 installed, so libraries rebuilt without the upstream signing key are replaced too.
-The MSI is unsigned. Close clawPDF before running the installer.
+The MSI is unsigned. Close clawPDF and all Word windows before running the installer.
 
 To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
 `TlbExp.exe` to export `src\_Build\Release\clawPDF.exe` to
 `src\_Build\Release\clawPDF.tlb`, then run:
 
 ```powershell
-python build_installer.py --output clawPDF-0.9.5-WordSVG-zh-CN-setup.msi
+python build_installer.py --output clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
 ```
 
 The builder uses Python's standard library, Windows Installer, `expand.exe` and

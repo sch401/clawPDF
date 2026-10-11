@@ -47,6 +47,10 @@ namespace clawSoft.clawPDF.Startup
 
             var commandLineParser = new CommandLineParser(commandLineArgs);
 
+            if (commandLineParser.HasArgument("WordSnapshot"))
+                return new PrintFileStart(commandLineParser.GetArgument("WordSnapshot"), FindPrinterName(commandLineParser),
+                    commandLineParser.GetArgument("DocumentTitle") ?? "Word document");
+
             if (commandLineParser.HasArgument("Config"))
             {
                 Console.WriteLine("Load settings");

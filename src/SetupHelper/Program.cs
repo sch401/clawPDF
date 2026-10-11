@@ -169,8 +169,10 @@ namespace clawSoft.clawPDF.SetupHelper
             if (Environment.Is64BitOperatingSystem)
             {
                 CallRegAsmForShellWow6432("clawPDF.exe", "/codebase /tlb");
+                CallRegAsmForShellWow6432("clawPDF.WordAddIn.dll", "/codebase");
             }
             CallRegAsmForShell("clawPDF.exe", "/codebase /tlb");
+            CallRegAsmForShell("clawPDF.WordAddIn.dll", "/codebase");
         }
 
         private static void UnregisterComInterface()
@@ -178,8 +180,10 @@ namespace clawSoft.clawPDF.SetupHelper
             if (Environment.Is64BitOperatingSystem)
             {
                 CallRegAsmForShellWow6432("clawPDF.exe", "/unregister");
+                CallRegAsmForShellWow6432("clawPDF.WordAddIn.dll", "/unregister");
             }
             CallRegAsmForShell("clawPDF.exe", "/unregister");
+            CallRegAsmForShell("clawPDF.WordAddIn.dll", "/unregister");
         }
 
         private static void CallRegAsmForShellWow6432(string fileName, string parameters)

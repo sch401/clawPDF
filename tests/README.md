@@ -34,6 +34,9 @@ TOC, REF and PAGEREF; NOTEREF and locked fields are not exercised by this fixtur
 
 To test a real document, pass its path as the second argument:
 
+Pass `--snapshot` as the third argument to create a Flat OPC copy and exercise
+the Word print add-in's snapshot export and queue route instead of file import.
+
 ```powershell
 & "$buildFolder/WordPdfRegression.exe" ../real-document 'C:/Documents/Doc1.docx'
 ```
@@ -42,12 +45,14 @@ This runs Word export, queue submission and Ghostscript conversion with the
 source file preserved. The three-page fixture checker applies to the generated
 fixture only. In the reported `Doc1.docx`, the native PDF had 929 curves and 102
 lines; the final PDF had 877 curves and 102 lines. Both had zero bitmap images.
-The PDF printed from Word's Print command had three bitmap images and no curves.
+The original PostScript PDF printed from Word had three bitmap images and no curves.
+The 0.9.6 Word add-in was also checked separately using Word's actual File > Print
+button with this document, and the Chinese clawPDF save window.
 
 After building the MSI, run the offline installer check from the repository root:
 
 ```powershell
-python tests/check_installer.py . path/to/clawPDF-0.9.5-WordSVG-zh-CN-setup.msi
+python tests/check_installer.py . path/to/clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
 ```
 
 It verifies product and upgrade identifiers, the upgrade sequence, all cabinet

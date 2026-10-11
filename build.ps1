@@ -25,7 +25,7 @@ if ($FrameworkRootPath) { $options += "/p:TargetFrameworkRootPath=$FrameworkRoot
 
 Push-Location $PSScriptRoot
 try {
-    foreach ($project in @('src/clawPDF/clawPDF.csproj', 'src/clawPDF.Bridge/clawPDF.Bridge.csproj', 'src/SetupHelper/SetupHelper.csproj')) {
+    foreach ($project in @('src/clawPDF/clawPDF.csproj', 'src/clawPDF.Bridge/clawPDF.Bridge.csproj', 'src/SetupHelper/SetupHelper.csproj', 'src/clawPDF.WordAddIn/clawPDF.WordAddIn.csproj')) {
         & $msbuild $project @options /v:minimal
         if ($LASTEXITCODE -ne 0) { throw "Build failed: $project" }
     }

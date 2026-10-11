@@ -150,8 +150,8 @@ def main():
     build = repo / 'src/_Build/Release'
     metadata = assembly_metadata(build)
     version = '.'.join(metadata['clawpdf.exe']['Version'].split('.')[:3])
-    if version != '0.9.5':
-        raise RuntimeError('Build the 0.9.5 Release binaries first.')
+    if version != '0.9.6':
+        raise RuntimeError('Build the 0.9.6 Release binaries first.')
     if (build / 'clawPDF.tlb').read_bytes()[:4] != b'MSFT':
         raise RuntimeError('Export clawPDF.tlb with TlbExp.exe before building the installer.')
     work = repo / '.build-tools' / ('installer-' + uuid.uuid4().hex)

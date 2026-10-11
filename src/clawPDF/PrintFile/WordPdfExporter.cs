@@ -25,6 +25,19 @@ namespace clawSoft.clawPDF.PrintFile
             if (!IsWordDocument(filename) || !File.Exists(filename))
                 throw new ArgumentException("A Word document that exists is required.", nameof(filename));
 
+            ExportCore(filename, outputFilename);
+        }
+
+        public static void ExportSnapshot(string filename, string outputFilename)
+        {
+            if (!File.Exists(filename) || !string.Equals(Path.GetExtension(filename), ".xml", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("A Word Flat OPC snapshot is required.", nameof(filename));
+            ExportCore(filename, outputFilename);
+        }
+
+        private static void ExportCore(string filename, string outputFilename)
+        {
+
             var wordType = Type.GetTypeFromProgID("Word.Application");
             if (wordType == null)
                 throw new InvalidOperationException("Microsoft Word must be installed for native PDF export.");

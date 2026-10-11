@@ -155,7 +155,21 @@ namespace clawSoft.clawPDF.PrintFile
             return Successful;
         }
 
-        private void ExportWordPdf()
+        public bool PrintWordSnapshot(string documentTitle)
+        {
+            try
+            {
+                ExportWordPdf(documentTitle);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Word print snapshot export failed.");
+                return false;
+            }
+        }
+
+        private void ExportWordPdf(string documentTitle = null)
         {
             var tempFolder = Path.Combine(Path.GetTempPath(), "clawPDF-Word-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempFolder);
@@ -164,13 +178,16 @@ namespace clawSoft.clawPDF.PrintFile
             var submitted = false;
             try
             {
-                WordPdfExporter.Export(Filename, pdfFile);
+                if (documentTitle == null)
+                    WordPdfExporter.Export(Filename, pdfFile);
+                else
+                    WordPdfExporter.ExportSnapshot(Filename, pdfFile);
                 infFile = PsFileHelper.TransformToInfFile(pdfFile, JobInfoQueue.Instance.SpoolFolder, Printer);
                 if (string.IsNullOrEmpty(infFile))
                     throw new IOException("Could not queue the PDF exported by Word.");
 
                 var jobInfo = new JobInfo(infFile);
-                jobInfo.SourceFiles[0].DocumentTitle = Filename;
+                jobInfo.SourceFiles[0].DocumentTitle = documentTitle ?? Filename;
                 jobInfo.SourceFiles[0].TotalPages = PDFProcessor.GetNumberOfPages(pdfFile);
                 jobInfo.SaveInf();
 
