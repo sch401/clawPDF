@@ -40,8 +40,8 @@ internal static class WordPdfRegression
         {
             var folder = Path.GetFullPath(args[0]);
             Directory.CreateDirectory(folder);
-            var source = Path.Combine(folder, "SVG-navigation.DOCX");
-            Assert(File.Exists(source), "Run create_word_fixture.py first");
+            var source = args.Length > 1 ? Path.GetFullPath(args[1]) : Path.Combine(folder, "SVG-navigation.DOCX");
+            Assert(File.Exists(source), "Provide a Word document or run create_word_fixture.py first");
             Console.WriteLine("Exporting the fixture with Word...");
             var hash = Hash(source);
             var assembly = Assembly.LoadFrom(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "clawPDF.exe"));
@@ -80,12 +80,12 @@ internal static class WordPdfRegression
             var inf = capture.Submitted.Arguments.Substring("/InfoDataFile=".Length).Trim('"');
             Assert(Path.GetFullPath(inf).StartsWith(testSpool + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "Test job confined to its spool");
             var info = new JobInfo(inf);
-            Assert(info.SourceFiles[0].DocumentTitle == source && info.SourceFiles[0].TotalPages == 3, "Source title and page count queued");
+            Assert(info.SourceFiles[0].DocumentTitle == source && info.SourceFiles[0].TotalPages == clawSoft.clawPDF.PDFProcessing.PDFProcessor.GetNumberOfPages(wordPdf), "Source title and page count queued");
             Assert(File.Exists(info.SourceFiles[0].Filename), "Queued PDF survives export temporary cleanup");
             Assert(hash == Hash(source), "Source unchanged after command submission");
             Console.WriteLine("Converting the submitted PDF through clawPDF...");
-            info.Metadata.Title = "SVG navigation regression";
-            info.Metadata.Author = "clawPDF regression";
+            info.Metadata.Title = Path.GetFileNameWithoutExtension(source);
+            info.Metadata.Author = "";
             var profile = new ConversionProfile { OutputFormat = OutputFormat.Pdf, OpenViewer = false };
             profile.AutoSave.Enabled = true;
             profile.AutoSave.EnsureUniqueFilenames = false;

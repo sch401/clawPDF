@@ -24,11 +24,17 @@ try:
     original, new = databases
     props = {r['Property']: r['Value'] for r in api.query(new, 'SELECT * FROM `Property`')}
     old_props = {r['Property']: r['Value'] for r in api.query(original, 'SELECT * FROM `Property`')}
-    assert props['ProductVersion'] == '0.9.4'
+    expected_version = '.'.join(api.assembly_metadata(repo / 'src/_Build/Release')['clawpdf.exe']['Version'].split('.')[:3])
+    assert props['ProductVersion'] == expected_version
+    assert props['ProductLanguage'] == '2052'
+    controls = api.query(new, 'SELECT * FROM `Control`')
+    welcome = next(row['Text'] for row in controls if row['Dialog_'] == 'WelcomeForm' and row['Control'] == 'BannerText')
+    assert '欢迎安装' in welcome
+    assert all(row['FaceName'] == 'Microsoft YaHei UI' for row in api.query(new, 'SELECT * FROM `TextStyle`'))
     assert props['ProductCode'] != old_props['ProductCode']
     assert props['UpgradeCode'] == old_props['UpgradeCode']
     upgrade = api.query(new, 'SELECT * FROM `Upgrade`')
-    assert len(upgrade) == 1 and upgrade[0]['VersionMax'] == '0.9.4'
+    assert len(upgrade) == 1 and upgrade[0]['VersionMax'] == expected_version
     assert upgrade[0]['UpgradeCode'] == old_props['UpgradeCode']
     assert api.query(new, 'SELECT * FROM `CustomAction`') == api.query(original, 'SELECT * FROM `CustomAction`')
     sequence = {r['Action']: int(r['Sequence']) for r in api.query(new, 'SELECT * FROM `InstallExecuteSequence`')}

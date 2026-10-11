@@ -486,9 +486,7 @@ namespace clawSoft.clawPDF.Helper
 
             settings.ApplicationSettings.TitleReplacement = titleReplacement;
 
-            var language = FindDefaultLanguage();
-            if (language != null)
-                settings.ApplicationSettings.Language = language;
+            settings.ApplicationSettings.Language = FindDefaultLanguage() ?? "Chinese (Simplified)";
 
             settings.SortConversionProfiles();
 

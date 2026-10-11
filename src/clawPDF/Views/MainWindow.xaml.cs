@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Interop;
+using Microsoft.Win32;
 using clawSoft.clawPDF.Helper;
 using clawSoft.clawPDF.Shared.Helper;
 using clawSoft.clawPDF.Shared.Helper.Logging;
@@ -52,6 +53,17 @@ namespace clawSoft.clawPDF.Views
         {
             var window = new ProfileSettingsWindow(SettingsHelper.Settings);
             window.ShowDialog();
+        }
+
+        private void WordPdfButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Word (*.docx;*.docm;*.doc)|*.docx;*.docm;*.doc",
+                CheckFileExists = true
+            };
+            if (dialog.ShowDialog(this) == true)
+                DragAndDropHelper.PrintPrintableFiles(new[] { dialog.FileName });
         }
 
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)

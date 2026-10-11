@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import uuid
@@ -26,6 +27,7 @@ for name, args in {
     'MsiRecordSetStreamW': [U, U, c.c_wchar_p],
     'MsiRecordReadStream': [U, U, c.c_void_p, P],
     'MsiDatabaseCommit': [U],
+    'MsiDatabaseImportW': [U, c.c_wchar_p, c.c_wchar_p],
     'MsiGetSummaryInformationW': [U, c.c_wchar_p, U, P],
     'MsiSummaryInfoSetPropertyW': [U, U, U, c.c_int, c.c_void_p, c.c_wchar_p],
     'MsiSummaryInfoPersist': [U],
@@ -148,8 +150,8 @@ def main():
     build = repo / 'src/_Build/Release'
     metadata = assembly_metadata(build)
     version = '.'.join(metadata['clawpdf.exe']['Version'].split('.')[:3])
-    if version != '0.9.4':
-        raise RuntimeError('Build the 0.9.4 Release binaries first.')
+    if version != '0.9.5':
+        raise RuntimeError('Build the 0.9.5 Release binaries first.')
     if (build / 'clawPDF.tlb').read_bytes()[:4] != b'MSFT':
         raise RuntimeError('Export clawPDF.tlb with TlbExp.exe before building the installer.')
     work = repo / '.build-tools' / ('installer-' + uuid.uuid4().hex)
@@ -161,6 +163,21 @@ def main():
     database = U()
     check(msi.MsiOpenDatabaseW(str(candidate), c.c_void_p(1), c.byref(database)))
     try:
+        # Set the MSI string pool encoding before writing Chinese UI text.
+        (work / '_ForceCodepage.idt').write_bytes(b'\r\n\r\n936\t_ForceCodepage\r\n')
+        check(msi.MsiDatabaseImportW(database, str(work), '_ForceCodepage.idt'))
+        translations = json.loads((repo / 'installer_zh_cn.json').read_text(encoding='utf-8'))
+        for table, keys, field in (('Control', ('Dialog_', 'Control'), 'Text'),
+                                   ('RadioButton', ('Property', 'Order'), 'Text'),
+                                   ('Dialog', ('Dialog',), 'Title')):
+            for row in query(database, f'SELECT * FROM `{table}`'):
+                match = re.match(r'^(\{\\[^}]+\})?(.*)$', row[field], re.DOTALL)
+                prefix, text = match.group(1) or '', match.group(2)
+                if text in translations:
+                    where = ' AND '.join(f'`{key}`=?' for key in keys)
+                    execute(database, f'UPDATE `{table}` SET `{field}`=? WHERE {where}',
+                            prefix + translations[text], *(int(row[key]) if key == 'Order' else row[key] for key in keys))
+        execute(database, 'UPDATE `TextStyle` SET `FaceName`=?', 'Microsoft YaHei UI')
         cab_name = export_cabinet(database, work / 'original.cab')
         run_tool(['expand.exe', '-F:*', str(work / 'original.cab'), str(stage)], work)
         files = query(database, 'SELECT * FROM `File`')
@@ -227,7 +244,8 @@ def main():
                     else:
                         execute(database, 'DELETE FROM `MsiAssemblyName` WHERE `Component_`=? AND `Name`=?', row['Component_'], entry['Name'])
 
-        for name, value in {'ProductVersion': version, 'ProductName': 'clawPDF ' + version + ' Word SVG',
+        for name, value in {'ProductVersion': version, 'ProductName': 'clawPDF ' + version + ' Word SVG 中文版',
+                            'ProductLanguage': '2052',
                             'ProductCode': '{' + str(uuid.uuid5(uuid.NAMESPACE_URL, 'https://github.com/sch401/clawPDF/' + version)).upper() + '}',
                             'ARPURLINFOABOUT': 'https://github.com/sch401/clawPDF/tree/preserve-word-svg'}.items():
             execute(database, 'UPDATE `Property` SET `Value`=? WHERE `Property`=?', value, name)
@@ -242,7 +260,9 @@ def main():
         execute(database, 'UPDATE `InstallExecuteSequence` SET `Sequence`=? WHERE `Action`=?', 1520, 'RemoveExistingProducts')
         execute(database, 'UPDATE `Media` SET `LastSequence`=? WHERE `DiskId`=?', len(files), 1)
         summary = U()
-        check(msi.MsiGetSummaryInformationW(database, None, 1, c.byref(summary)))
+        check(msi.MsiGetSummaryInformationW(database, None, 3, c.byref(summary)))
+        check(msi.MsiSummaryInfoSetPropertyW(summary, 1, 2, 936, None, None))
+        check(msi.MsiSummaryInfoSetPropertyW(summary, 7, 30, 0, None, 'Intel;2052'))
         check(msi.MsiSummaryInfoSetPropertyW(summary, 9, 30, 0, None, '{' + str(uuid.uuid4()).upper() + '}'))
         check(msi.MsiSummaryInfoPersist(summary))
         msi.MsiCloseHandle(summary)

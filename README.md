@@ -8,7 +8,14 @@ ClawPDF is open-source and compatible with all major Windows client and server o
 
 # Download
 
-## This fork: native Word PDF export (0.9.4)
+## This fork: native Word PDF export (0.9.5)
+
+Open clawPDF and click **Word to PDF (preserve SVG)**, select a saved Word
+document, and choose the normal **PDF** profile. The main window explains the
+Word printing limitation alongside this button, in English and Chinese.
+New users default to Simplified Chinese. Existing language preferences are
+retained and can be changed in Application Settings. The installer wizard is
+also localized into Simplified Chinese.
 
 When a `.docx`, `.docm`, or `.doc` file is dropped into clawPDF or submitted through
 `/PrintFile` or the COM `PrintFile` API, this fork uses the installed Microsoft Word
@@ -47,7 +54,7 @@ It uses the existing installed printer and settings. The ZIP does not install or
 replace the printer driver, register a new COM server, or change Windows file
 associations. Its assemblies are unsigned.
 
-The 0.9.4 MSI includes the upstream printer driver, shortcuts, COM registration
+The 0.9.5 MSI includes the upstream printer driver, shortcuts, COM registration
 and uninstall actions. It uses the same upgrade family and a new product code.
 Old products are removed within the installation transaction before new files are
 installed, so libraries rebuilt without the upstream signing key are replaced too.
@@ -58,13 +65,15 @@ To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
 `src\_Build\Release\clawPDF.tlb`, then run:
 
 ```powershell
-python build_installer.py --output clawPDF-0.9.4-WordSVG-setup.msi
+python build_installer.py --output clawPDF-0.9.5-WordSVG-zh-CN-setup.msi
 ```
 
 The builder uses Python's standard library, Windows Installer, `expand.exe` and
 `makecab.exe`. It preserves the upstream MSI's driver and installation actions,
 replaces the application files, updates assembly identities and file hashes, and
 includes new runtime configuration files. It creates an MSI without installing it.
+`installer_zh_cn.json` supplies the wizard strings. The builder sets the MSI's
+Chinese language and string encoding before applying these translations.
 
 `tests\create_word_fixture.py`, `tests\WordPdfRegression.cs` and
 `tests\check_word_pdf.py` exercise a three-page document containing SVG, heading

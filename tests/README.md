@@ -32,15 +32,27 @@ test. Installed printer registration,
 COM registration and UI save dialogs are outside its scope. The fixture covers
 TOC, REF and PAGEREF; NOTEREF and locked fields are not exercised by this fixture.
 
+To test a real document, pass its path as the second argument:
+
+```powershell
+& "$buildFolder/WordPdfRegression.exe" ../real-document 'C:/Documents/Doc1.docx'
+```
+
+This runs Word export, queue submission and Ghostscript conversion with the
+source file preserved. The three-page fixture checker applies to the generated
+fixture only. In the reported `Doc1.docx`, the native PDF had 929 curves and 102
+lines; the final PDF had 877 curves and 102 lines. Both had zero bitmap images.
+The PDF printed from Word's Print command had three bitmap images and no curves.
+
 After building the MSI, run the offline installer check from the repository root:
 
 ```powershell
-python tests/check_installer.py . path/to/clawPDF-0.9.4-WordSVG-setup.msi
+python tests/check_installer.py . path/to/clawPDF-0.9.5-WordSVG-zh-CN-setup.msi
 ```
 
 It verifies product and upgrade identifiers, the upgrade sequence, all cabinet
 files and hashes, assembly identities, the unchanged upstream driver files and
-custom actions, and agreement with the Release build. It extracts an application
+custom actions, Chinese installer text and fonts, and agreement with the Release build. It extracts an application
 layout into the parent working directory, where the Word regression executable
 can be compiled and run. The check does not install the MSI or exercise its actual
 installation, upgrade or uninstall operations.

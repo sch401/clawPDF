@@ -1,7 +1,7 @@
 ﻿<Window x:Class="clawSoft.clawPDF.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="clawPDF" Height="344" Width="513"
+        Title="clawPDF" Height="460" Width="560"
         Background="{StaticResource ContainerBackground}"
         Loaded="MainWindow_OnLoaded"
         AllowDrop="True"
@@ -13,6 +13,12 @@
         WindowStartupLocation="CenterScreen" x:ClassModifier="internal">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="60" />
+        </Grid.RowDefinitions>
         <Grid.Resources>
             <Style x:Key="ButtonStyle" TargetType="{x:Type Button}">
                 <Setter Property="Height" Value="50" />
@@ -32,7 +38,17 @@
                        FontFamily="Calibri"
                        x:FieldModifier="private" />
         </DockPanel>
-        <StackPanel Height="140" Margin="30 20">
+        <StackPanel Grid.Row="1" Margin="30 18 30 0">
+            <Button Name="WordPdfButton" Height="42" Click="WordPdfButton_OnClick"
+                    Content="Word to PDF (preserve SVG)" />
+            <TextBlock Name="WordPdfHintText" TextWrapping="Wrap" Margin="0 10 0 0">
+                Save your Word document, select it here, then choose PDF to preserve SVG graphics and links.
+            </TextBlock>
+            <TextBlock Name="WordPrintHintText" TextWrapping="Wrap" Margin="0 6 0 0">
+                Word's Print command can rasterize SVG. Use the button above for vector output.
+            </TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Row="2" VerticalAlignment="Center" Margin="30 12">
             <TextBlock Name="IntroductionText" TextWrapping="Wrap" Margin="0 0 0 10">
                 clawPDF allows to create PDF files from any application that is able to print.
                 Creating a PDF file is easy:
@@ -41,7 +57,7 @@
             <TextBlock Name="IntroductionStep2Text" Margin="20 3">2. Print any document to the printer "clawPDF".</TextBlock>
             <TextBlock Name="IntroductionStep3Text" Margin="20 3">3. Save your PDF or send it as mail.</TextBlock>
         </StackPanel>
-        <DockPanel VerticalAlignment="Bottom">
+        <DockPanel Grid.Row="3" VerticalAlignment="Bottom">
             <Button DockPanel.Dock="Left" Name="InfoButton" Background="Transparent" Height="30" Width="30" Margin="10 0 0 10"
                     Cursor="{x:Static Cursors.Hand}" Template="{StaticResource RoundButtonStyle}"
                     FontWeight="Bold" FontFamily="Calibri" FontSize="50" Click="InfoButton_Click" Content="{StaticResource Info}" />
