@@ -64,6 +64,14 @@ Old products are removed within the installation transaction before new files ar
 installed, so libraries rebuilt without the upstream signing key are replaced too.
 The MSI is unsigned. Close clawPDF and all Word windows before running the installer.
 
+In Word's COM Add-ins list, **clawPDF Word 矢量打印** must be loaded for the print
+integration. If its registration is missing, repair the MSI or run
+`SetupHelper.exe /ComInterface=Register` from the installed clawPDF directory as
+administrator, then restart Word. Closing a document window can leave an older
+Word automation instance running; a newly started Word instance should list
+`clawPDF.WordPrint` as connected. Ordinary PDF profiles preserve the incoming
+graphics; the Word add-in supplies the vector data for this print route.
+
 To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
 `TlbExp.exe` to export `src\_Build\Release\clawPDF.exe` to
 `src\_Build\Release\clawPDF.tlb`, then run:
@@ -71,6 +79,11 @@ To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
 ```powershell
 python build_installer.py --output clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
 ```
+
+If Word has loaded a DLL from the default build directory, compile into a separate
+directory with `build.ps1 -OutputDirectory .build-tools/package-release` and pass
+that directory to `build_installer.py --build-dir .build-tools/package-release`.
+Export the type library into that same directory before packaging.
 
 The builder uses Python's standard library, Windows Installer, `expand.exe` and
 `makecab.exe`. It preserves the upstream MSI's driver and installation actions,

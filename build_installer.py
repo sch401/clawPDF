@@ -145,9 +145,10 @@ def run_tool(args, folder):
 def main():
     parser = argparse.ArgumentParser(description='Build the Word SVG MSI from the upstream installer and Release binaries.')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--build-dir', type=Path, help='Release directory; defaults to src/_Build/Release.')
     args = parser.parse_args()
     repo = Path(__file__).resolve().parent
-    build = repo / 'src/_Build/Release'
+    build = args.build_dir.resolve() if args.build_dir else repo / 'src/_Build/Release'
     metadata = assembly_metadata(build)
     version = '.'.join(metadata['clawpdf.exe']['Version'].split('.')[:3])
     if version != '0.9.6':

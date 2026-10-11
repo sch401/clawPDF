@@ -49,11 +49,21 @@ The original PostScript PDF printed from Word had three bitmap images and no cur
 The 0.9.6 Word add-in was also checked separately using Word's actual File > Print
 button with this document, and the Chinese clawPDF save window.
 
+After restoring the installed COM registration, a fresh Word instance listed
+`clawPDF.WordPrint` with `Connect=True` without manually connecting it. Printing
+the unchanged Doc1 test copy produced a queued PDF with 929 curves, 102 lines and
+zero images. Earlier missing registration was traced to a temporary development
+cleanup process unregistering the shared COM class after the MSI was installed;
+that process has ended. This cleanup helper is outside the product and MSI.
+
 After building the MSI, run the offline installer check from the repository root:
 
 ```powershell
 python tests/check_installer.py . path/to/clawPDF-0.9.6-WordPrintSVG-zh-CN-setup.msi
 ```
+
+For an alternate Release directory, append its path as the third argument to
+`check_installer.py`, matching the installer's `--build-dir` argument.
 
 It verifies product and upgrade identifiers, the upgrade sequence, all cabinet
 files and hashes, assembly identities, the unchanged upstream driver files and

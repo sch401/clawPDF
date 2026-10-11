@@ -1,4 +1,4 @@
-param([string]$FrameworkRootPath)
+param([string]$FrameworkRootPath, [string]$OutputDirectory)
 
 $ErrorActionPreference = 'Stop'
 $buildTools = Join-Path $PSScriptRoot '.build-tools'
@@ -22,6 +22,13 @@ if (!$FrameworkRootPath -and !(Test-Path -LiteralPath $installedReferences)) {
 $options = @('/nologo', '/m:1', '/nr:false', '/restore', '/p:UseSharedCompilation=false', '/p:Configuration=Release', '/p:Platform=AnyCPU',
     '/p:SignAssembly=false', "/p:SolutionDir=$PSScriptRoot/", "/p:RestorePackagesPath=$buildTools/packages")
 if ($FrameworkRootPath) { $options += "/p:TargetFrameworkRootPath=$FrameworkRootPath/" }
+if ($OutputDirectory) {
+    if (![IO.Path]::IsPathRooted($OutputDirectory)) { $OutputDirectory = Join-Path $PSScriptRoot $OutputDirectory }
+    $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+    $options += "/p:OutDir=$OutputDirectory/"
+} else {
+    $OutputDirectory = Join-Path $PSScriptRoot 'src/_Build/Release'
+}
 
 Push-Location $PSScriptRoot
 try {
@@ -29,7 +36,7 @@ try {
         & $msbuild $project @options /v:minimal
         if ($LASTEXITCODE -ne 0) { throw "Build failed: $project" }
     }
-    Write-Host "Unsigned build: $PSScriptRoot/src/_Build/Release"
+    Write-Host "Unsigned build: $OutputDirectory"
 } finally {
     Pop-Location
 }

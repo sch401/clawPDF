@@ -8,6 +8,7 @@ from pathlib import Path
 
 repo = Path(sys.argv[1]).resolve()
 package = Path(sys.argv[2]).resolve()
+build = Path(sys.argv[3]).resolve() if len(sys.argv) > 3 else repo / 'src/_Build/Release'
 sys.path.insert(0, str(repo))
 import build_installer as api
 
@@ -24,7 +25,7 @@ try:
     original, new = databases
     props = {r['Property']: r['Value'] for r in api.query(new, 'SELECT * FROM `Property`')}
     old_props = {r['Property']: r['Value'] for r in api.query(original, 'SELECT * FROM `Property`')}
-    expected_version = '.'.join(api.assembly_metadata(repo / 'src/_Build/Release')['clawpdf.exe']['Version'].split('.')[:3])
+    expected_version = '.'.join(api.assembly_metadata(build)['clawpdf.exe']['Version'].split('.')[:3])
     assert props['ProductVersion'] == expected_version
     assert props['ProductLanguage'] == '2052'
     controls = api.query(new, 'SELECT * FROM `Control`')
@@ -58,7 +59,7 @@ try:
     assert len(files) == 113
     assert int(api.query(new, 'SELECT * FROM `Media`')[0]['LastSequence']) == max(int(r['Sequence']) for r in files)
     hashes = {r['File_']: r for r in api.query(new, 'SELECT * FROM `MsiFileHash`')}
-    identities = api.assembly_metadata(repo / 'src/_Build/Release')
+    identities = api.assembly_metadata(build)
     drivers = replacements = 0
     for row in files:
         content = (folder / 'new' / row['File']).read_bytes()
@@ -67,7 +68,7 @@ try:
         if relative.parts[0] == 'clawmon':
             assert content == (folder / 'original' / row['File']).read_bytes(), f'Upstream driver differs: {relative}'
             drivers += 1
-        built = repo / 'src/_Build/Release' / relative
+        built = build / relative
         if built.is_file():
             assert content == built.read_bytes(), f'Build mismatch: {relative}'
             replacements += 1
