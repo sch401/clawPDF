@@ -8,7 +8,7 @@ ClawPDF is open-source and compatible with all major Windows client and server o
 
 # Download
 
-## This fork: native Word PDF export (0.9.3.1)
+## This fork: native Word PDF export (0.9.4)
 
 When a `.docx`, `.docm`, or `.doc` file is dropped into clawPDF or submitted through
 `/PrintFile` or the COM `PrintFile` API, this fork uses the installed Microsoft Word
@@ -40,12 +40,31 @@ compiler reference assemblies are downloaded locally when the .NET Framework 4.6
 targeting pack is missing. Output is in `src\_Build\Release`. The native printer
 driver is unchanged; an existing clawPDF 0.9.3 installation supplies that driver.
 
-The packaged application is a ZIP build for an existing clawPDF 0.9.3 installation.
+The ZIP build is for an existing clawPDF 0.9.3 installation.
 Close any running clawPDF instance, extract the entire ZIP, and run its `clawPDF.exe`.
 Drop a saved Word document onto that executable and choose the normal PDF profile.
 It uses the existing installed printer and settings. The ZIP does not install or
 replace the printer driver, register a new COM server, or change Windows file
 associations. Its assemblies are unsigned.
+
+The 0.9.4 MSI includes the upstream printer driver, shortcuts, COM registration
+and uninstall actions. It uses the same upgrade family and a new product code.
+Old products are removed within the installation transaction before new files are
+installed, so libraries rebuilt without the upstream signing key are replaced too.
+The MSI is unsigned. Close clawPDF before running the installer.
+
+To build the MSI after the Release build, use Visual Studio's .NET Framework SDK
+`TlbExp.exe` to export `src\_Build\Release\clawPDF.exe` to
+`src\_Build\Release\clawPDF.tlb`, then run:
+
+```powershell
+python build_installer.py --output clawPDF-0.9.4-WordSVG-setup.msi
+```
+
+The builder uses Python's standard library, Windows Installer, `expand.exe` and
+`makecab.exe`. It preserves the upstream MSI's driver and installation actions,
+replaces the application files, updates assembly identities and file hashes, and
+includes new runtime configuration files. It creates an MSI without installing it.
 
 `tests\create_word_fixture.py`, `tests\WordPdfRegression.cs` and
 `tests\check_word_pdf.py` exercise a three-page document containing SVG, heading

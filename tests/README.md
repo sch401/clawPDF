@@ -31,3 +31,16 @@ real. The test uses its own spool folder. This is a document export and conversi
 test. Installed printer registration,
 COM registration and UI save dialogs are outside its scope. The fixture covers
 TOC, REF and PAGEREF; NOTEREF and locked fields are not exercised by this fixture.
+
+After building the MSI, run the offline installer check from the repository root:
+
+```powershell
+python tests/check_installer.py . path/to/clawPDF-0.9.4-WordSVG-setup.msi
+```
+
+It verifies product and upgrade identifiers, the upgrade sequence, all cabinet
+files and hashes, assembly identities, the unchanged upstream driver files and
+custom actions, and agreement with the Release build. It extracts an application
+layout into the parent working directory, where the Word regression executable
+can be compiled and run. The check does not install the MSI or exercise its actual
+installation, upgrade or uninstall operations.
